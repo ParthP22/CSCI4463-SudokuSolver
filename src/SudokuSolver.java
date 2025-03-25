@@ -8,13 +8,20 @@ public class SudokuSolver {
     private static int sudoku[][];
     private static PriorityQueue<int[]> constrained;
 
-    public static void solveSudoku(int[][] sudoku){
+    public static void solveSudoku(int[][] sudokuInput){
+        sudoku = sudokuInput;
         generateConstraints();
         generateAvailabilitySets();
-
+        System.out.println("set: " + availabilitySets[3][2].toString());
         constraintPropagation();
-
-
+        System.out.println("set: " + availabilitySets[3][2].toString());
+        for(int i = 0; i < sudoku.length; i++){
+            for(int j = 0; j < sudoku[i].length; j++){
+                if(sudoku[i][j] == 0 && !availabilitySets[i][j].isEmpty()){
+                    sudoku[i][j] = availabilitySets[i][j].iterator().next();
+                }
+            }
+        }
 
 
     }
@@ -34,9 +41,14 @@ public class SudokuSolver {
         for(int i = 0; i < sudoku.length; i++){
             for(int j = 0; j < sudoku[i].length; j++){
                 if(sudoku[i][j] != 0){
+                    //Calculate which 3x3 box this is in
+                    int boxRow = i/3;
+                    int boxCol = j/3;
+                    int boxIndex = boxRow*3 + boxCol;
+
                     constraints[0][i].add(sudoku[i][j]);
                     constraints[1][j].add(sudoku[i][j]);
-                    constraints[2][i].add(sudoku[i / 3][j % 3]);
+                    constraints[2][boxIndex].add(sudoku[i][j]);
                 }
             }
         }
@@ -50,9 +62,18 @@ public class SudokuSolver {
             for(int j = 0; j < availabilitySets[i].length; j++){
                 availabilitySets[i][j] = new HashSet();
                 usedOrRemoved[i][j] = new HashSet();
+
+                //Calculate which 3x3 box this is in
+                int boxRow = i/3;
+                int boxCol = j/3;
+                int boxIndex = boxRow*3 + boxCol;
+
                 if(sudoku[i][j] == 0){
                     for(int k = 1; k <= 9; k++){
-                        if(!constraints[i][j].contains(k)){
+                        if(!constraints[0][i].contains(k) &&
+                                !constraints[1][j].contains(k) &&
+                                !constraints[2][boxIndex].contains(k)){
+
                             availabilitySets[i][j].add(k);
                         }
                     }
@@ -63,57 +84,93 @@ public class SudokuSolver {
     }
 
     private static void constraintPropagation(){
+        int changes = 0;
         for(int i = 0; i < availabilitySets.length; i++){
             for(int j = 0; j < availabilitySets[i].length; j++){
                 if(availabilitySets[i][j].size() == 1){
                     int onlyElement = availabilitySets[i][j].iterator().next();
 
+                    //Calculate which 3x3 box this is in
+                    int boxRow = i/3;
+                    int boxCol = j/3;
+
                     //Iterate through the box that this element is in
-                    for(int k = 0; k < 3 * (i / 3) + 3; k++){
-                        for(int l = 0; l < 3 * (j % 3) + 3; l++){
-                            availabilitySets[k][l].remove(onlyElement);
-                            usedOrRemoved[k][l].add(onlyElement);
+                    for(int k = 3*boxRow; k < 3*boxRow + 3; k++){
+                        for(int l = 3*boxCol; l < 3*boxCol + 3; l++){
+                            if(!(i == k && j == l) && availabilitySets[k][l].contains(onlyElement)) {
+                                if(k == 3 && l == 2){
+                                    System.out.println("indices: " + i + ", " + j + ", " + k + ", " + l);
+                                    System.out.println("set: box" + availabilitySets[3][2].toString());
+                                }
+                                availabilitySets[k][l].remove(onlyElement);
+                                changes++;
+                            }
+                                //usedOrRemoved[k][l].add(onlyElement);
                         }
                     }
 
                     //Iterate through the column that this element is in
                     for(int k = 0; k < 9; k++){
-                        availabilitySets[k][j].remove(onlyElement);
-                        usedOrRemoved[k][j].add(onlyElement);
+                        if(i != k && availabilitySets[k][j].contains(onlyElement)) {
+                            if(k == 3 && j == 2){
+                                System.out.println("set: col" + availabilitySets[3][2].toString());
+                            }
+                            availabilitySets[k][j].remove(onlyElement);
+                            changes++;
+                        }
+                            //usedOrRemoved[k][j].add(onlyElement);
                     }
 
                     //Iterate through the row that this element is in
                     for(int k = 0; k < 9; k++){
-                        availabilitySets[i][k].remove(onlyElement);
-                        usedOrRemoved[i][k].add(onlyElement);
+                        if(j != k && availabilitySets[i][k].contains(onlyElement)) {
+                            if(i == 3 && k == 2){
+                                System.out.println("set: row" + availabilitySets[3][2].toString());
+                            }
+                            availabilitySets[i][k].remove(onlyElement);
+                            changes++;
+                        }
+                        //usedOrRemoved[i][k].add(onlyElement);
                     }
                 }
             }
+        }
+        if(changes > 0){
+            System.out.println("changes: " + changes);
+            constraintPropagation();
         }
     }
 
     private static void constraintPropagation(int[] indices){
         int onlyElement = availabilitySets[indices[0]][indices[1]].iterator().next();
-
+        boolean change = false;
         //Iterate through the box that this element is in
         for(int k = 0; k < 3 * (indices[0] / 3) + 3; k++){
             for(int l = 0; l < 3 * (indices[1] % 3) + 3; l++){
                 availabilitySets[k][l].remove(onlyElement);
-                usedOrRemoved[k][l].add(onlyElement);
+                change = true;
+                //usedOrRemoved[k][l].add(onlyElement);
             }
         }
 
         //Iterate through the column that this element is in
         for(int k = 0; k < 9; k++){
             availabilitySets[k][indices[1]].remove(onlyElement);
-            usedOrRemoved[k][indices[1]].add(onlyElement);
+            change = true;
+            //usedOrRemoved[k][indices[1]].add(onlyElement);
         }
 
         //Iterate through the row that this element is in
         for(int k = 0; k < 9; k++){
             availabilitySets[indices[0]][k].remove(onlyElement);
-            usedOrRemoved[indices[0]][k].add(onlyElement);
+            change = true;
+            //usedOrRemoved[indices[0]][k].add(onlyElement);
         }
+
+        if(change){
+            constraintPropagation();
+        }
+
     }
 
 
@@ -175,5 +232,16 @@ public class SudokuSolver {
 
     }
 
+    private static void dfs(){
+        int[][] directions = {{-1,0},{0,1},{1,0},{0,-1}};
 
+        Stack<int[]> path = new Stack<>();
+
+        int i = 0, j = 0;
+
+    }
+
+    private static void recurse(){
+
+    }
 }

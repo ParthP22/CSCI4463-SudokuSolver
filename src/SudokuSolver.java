@@ -12,9 +12,11 @@ public class SudokuSolver {
         sudoku = sudokuInput;
         generateConstraints();
         generateAvailabilitySets();
-        System.out.println("set: " + availabilitySets[3][2].toString());
+        //used for debugging
+        //        System.out.println("set: " + availabilitySets[3][2].toString());
         constraintPropagation();
-        System.out.println("set: " + availabilitySets[3][2].toString());
+        //used for debugging
+        System.out.println("set: " + availabilitySets[0][1].toString());
         for(int i = 0; i < sudoku.length; i++){
             for(int j = 0; j < sudoku[i].length; j++){
                 if(sudoku[i][j] == 0 && !availabilitySets[i][j].isEmpty()){
@@ -98,9 +100,10 @@ public class SudokuSolver {
                     for(int k = 3*boxRow; k < 3*boxRow + 3; k++){
                         for(int l = 3*boxCol; l < 3*boxCol + 3; l++){
                             if(!(i == k && j == l) && availabilitySets[k][l].contains(onlyElement)) {
-                                if(k == 3 && l == 2){
+                                //used for debugging
+                                if(k == 0 && l == 4){
                                     System.out.println("indices: " + i + ", " + j + ", " + k + ", " + l);
-                                    System.out.println("set: box" + availabilitySets[3][2].toString());
+                                    System.out.println("set: box" + availabilitySets[0][4].toString());
                                 }
                                 availabilitySets[k][l].remove(onlyElement);
                                 changes++;
@@ -112,8 +115,9 @@ public class SudokuSolver {
                     //Iterate through the column that this element is in
                     for(int k = 0; k < 9; k++){
                         if(i != k && availabilitySets[k][j].contains(onlyElement)) {
-                            if(k == 3 && j == 2){
-                                System.out.println("set: col" + availabilitySets[3][2].toString());
+//                            //used for debugging
+                            if(k == 0 && j == 4){
+                                System.out.println("set: col" + availabilitySets[0][4].toString());
                             }
                             availabilitySets[k][j].remove(onlyElement);
                             changes++;
@@ -124,8 +128,9 @@ public class SudokuSolver {
                     //Iterate through the row that this element is in
                     for(int k = 0; k < 9; k++){
                         if(j != k && availabilitySets[i][k].contains(onlyElement)) {
-                            if(i == 3 && k == 2){
-                                System.out.println("set: row" + availabilitySets[3][2].toString());
+//                            //used for debugging
+                            if(i == 0 && k == 4){
+                                System.out.println("set: row" + availabilitySets[0][4].toString());
                             }
                             availabilitySets[i][k].remove(onlyElement);
                             changes++;
@@ -136,7 +141,7 @@ public class SudokuSolver {
             }
         }
         if(changes > 0){
-            System.out.println("changes: " + changes);
+            //System.out.println("changes: " + changes);
             constraintPropagation();
         }
     }
@@ -235,7 +240,7 @@ public class SudokuSolver {
     private static void dfs(){
         int[][] directions = {{-1,0},{0,1},{1,0},{0,-1}};
 
-        Stack<int[]> path = new Stack<>();
+        //Stack<int[]> path = new Stack<>();
 
         int i = 0, j = 0;
 

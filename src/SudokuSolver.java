@@ -464,10 +464,9 @@ public class SudokuSolver {
             // Iterate through the box that this element is in
             for (int k = 3*boxRow; k < 3 * boxRow + 3; k++) {
                 for (int l = 3*boxCol; l < 3 * boxCol + 3; l++) {
-                    // If the element is not the current element we are checking for and
                     // if the element contains this value in its availability set, then we
                     // increment the counter for this value.
-                    if(!(rowIndex == k && colIndex == l) && availabilitySets[k][l].contains(num)){
+                    if(availabilitySets[k][l].contains(num)){
                         freq.put(num, freq.getOrDefault(num,0) + 1);
                     }
                 }
@@ -475,20 +474,18 @@ public class SudokuSolver {
 
             // Iterate through the column that this element is in
             for (int k = 0; k < 9; k++) {
-                // If the element is not the current element we are checking for and
                 // if the element contains this value in its availability set, then we
                 // increment the counter for this value.
-                if(rowIndex != k && availabilitySets[k][colIndex].contains(num)){
+                if(availabilitySets[k][colIndex].contains(num)){
                     freq.put(num, freq.getOrDefault(num,0) + 1);
                 }
             }
 
             // Iterate through the row that this element is in
             for (int k = 0; k < 9; k++) {
-                // If the element is not the current element we are checking for and
                 // if the element contains this value in its availability set, then we
                 // increment the counter for this value.
-                if(colIndex != k && availabilitySets[rowIndex][k].contains(num)){
+                if(availabilitySets[rowIndex][k].contains(num)){
                     freq.put(num, freq.getOrDefault(num,0) + 1);
                 }
             }

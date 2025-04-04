@@ -28,10 +28,10 @@ public class SudokuSolver {
 
         // Prior to DFS, run constraint propagation. This alone will actually solve
         // most of the easy-difficulty puzzles.
-        constraintPropagation(availabilitySets, sudoku);
+        constraintPropagation(availabilitySets, constraints, sudoku);
 
         // Finally, run DFS, which has constraint propagation implemented as well
-        dfs(sudoku,0,availabilitySets);
+        dfs(sudoku, availabilitySets, constraints);
     }
 
     /**
@@ -135,7 +135,7 @@ public class SudokuSolver {
      * @param sudoku a 9x9 matrix that contains the Sudoku puzzle
      * @return false if backtracking is required (an element's availability set has been fully emptied), true otherwise
      */
-    private static boolean constraintPropagation(HashSet<Integer>[][] availabilitySets, int[][] sudoku){
+    private static boolean constraintPropagation(HashSet<Integer>[][] availabilitySets, HashSet<Integer>[][] constraints, int[][] sudoku){
 
         // Count the number of changes that have been made.
         // (Basically, the number of times a value was removed any
@@ -171,7 +171,7 @@ public class SudokuSolver {
                             // care about removing this value from the availability set of an already assigned value).
                             if(!(i == k && j == l) && availabilitySets[k][l].contains(onlyElement) && sudoku[k][l] == 0) {
                                 availabilitySets[k][l].remove(onlyElement);
-
+                                constraints[2][3*boxRow + boxCol].add(onlyElement);
                                 // If removing this element results in an empty availability set, then we must
                                 // backtrack because we won't find the correct answer in this path of DFS.
                                 if(availabilitySets[k][l].isEmpty()){
@@ -194,7 +194,7 @@ public class SudokuSolver {
                             // have the current value, and we also make sure that the element is unassigned (we don't
                             // care about removing this value from the availability set of an already assigned value).
                             availabilitySets[k][j].remove(onlyElement);
-
+                            constraints[1][j].add(onlyElement);
                             // If removing this element results in an empty availability set, then we must
                             // backtrack because we won't find the correct answer in this path of DFS.
                             if(availabilitySets[k][j].isEmpty()){
@@ -216,7 +216,7 @@ public class SudokuSolver {
                             // have the current value, and we also make sure that the element is unassigned (we don't
                             // care about removing this value from the availability set of an already assigned value).
                             availabilitySets[i][k].remove(onlyElement);
-
+                            constraints[0][i].add(onlyElement);
                             // If removing this element results in an empty availability set, then we must
                             // backtrack because we won't find the correct answer in this path of DFS.
                             if(availabilitySets[i][k].isEmpty()){
@@ -233,7 +233,7 @@ public class SudokuSolver {
 
         // If any changes were made, then we must run constraint propagation again.
         if(changes > 0){
-            return constraintPropagation(availabilitySets, sudoku);
+            return constraintPropagation(availabilitySets, constraints, sudoku);
         }
 
         // We will return true, because this means no backtracking is required
@@ -257,7 +257,7 @@ public class SudokuSolver {
      * @param sudoku a 9x9 matrix that contains the Sudoku puzzle
      * @return false if backtracking is required (an element's availability set has been fully emptied), true otherwise
      */
-    private static boolean constraintPropagation(int index, int value, HashSet<Integer>[][] availabilitySets, int[][] sudoku){
+    private static boolean constraintPropagation(int index, int value, HashSet<Integer>[][] availabilitySets, HashSet<Integer>[][] constraints, int[][] sudoku){
 
         // Count the number of changes that have been made.
         // (Basically, the number of times a value was removed any
@@ -284,6 +284,7 @@ public class SudokuSolver {
                     // have the current value, and we also make sure that the element is unassigned (we don't
                     // care about removing this value from the availability set of an already assigned value).
                     availabilitySets[k][l].remove(value);
+                    constraints[2][3*boxRow + boxCol].add(value);
 
                     // If removing this element results in an empty availability set, then we must
                     // backtrack because we won't find the correct answer in this path of DFS.
@@ -308,7 +309,7 @@ public class SudokuSolver {
                 // have the current value, and we also make sure that the element is unassigned (we don't
                 // care about removing this value from the availability set of an already assigned value).
                 availabilitySets[k][colIndex].remove(value);
-
+                constraints[1][colIndex].add(value);
                 // If removing this element results in an empty availability set, then we must
                 // backtrack because we won't find the correct answer in this path of DFS.
                 if(availabilitySets[k][colIndex].isEmpty()){
@@ -331,7 +332,7 @@ public class SudokuSolver {
                 // have the current value, and we also make sure that the element is unassigned (we don't
                 // care about removing this value from the availability set of an already assigned value).
                 availabilitySets[rowIndex][k].remove(value);
-
+                constraints[0][rowIndex].add(value);
                 // If removing this element results in an empty availability set, then we must
                 // backtrack because we won't find the correct answer in this path of DFS.
                 if(availabilitySets[rowIndex][k].isEmpty()){
@@ -351,7 +352,7 @@ public class SudokuSolver {
         // constraint propagation to go over the entire 9x9 matrix and see if there
         // are any availability sets with one element remaining).
         if(changes > 0){
-            return constraintPropagation(availabilitySets, sudoku);
+            return constraintPropagation(availabilitySets, constraints, sudoku);
         }
 
         // We will return true, because this means no backtracking is required
@@ -360,21 +361,44 @@ public class SudokuSolver {
     }
 
 
-//    private static int[] mostConstrainedVariable(HashSet<Integer>[][] availabilitySets){
-//        PriorityQueue<int[]> constrained = new PriorityQueue<>((a,b) -> availabilitySets[a[0]][a[1]].size() - availabilitySets[b[0]][b[1]].size());
-//
-//        for(int i = 0; i < availabilitySets.length; i++){
-//            for(int j = 0; j < availabilitySets[i].length; j++){
-//                if(availabilitySets[i][j].size() >= 1){
-//                    constrained.offer(new int[]{i, j});
-//                }
-//            }
-//        }
-//
-//        return constrained.peek();
-//
-//    }
-//
+    private static PriorityQueue<int[]> mostConstrainedVariable(int[][] sudoku, HashSet<Integer>[][] availabilitySets, HashSet<Integer>[][] constraints){
+        PriorityQueue<int[]> constrained = new PriorityQueue<>((a,b) -> (availabilitySets[a[0]][a[1]].size() == availabilitySets[b[0]][b[1]].size()) ?
+                                                                        mostConstrainingVariable(constraints,a,b) :
+                                                                        availabilitySets[a[0]][a[1]].size() - availabilitySets[b[0]][b[1]].size());
+
+        for(int i = 0; i < availabilitySets.length; i++){
+            for(int j = 0; j < availabilitySets[i].length; j++){
+                if(availabilitySets[i][j].size() >= 1 && sudoku[i][j] == 0){
+                    constrained.offer(new int[]{i, j});
+                }
+            }
+        }
+
+        return constrained;
+
+    }
+
+    private static int mostConstrainingVariable(HashSet<Integer>[][] constraints, int[] indicesA, int[] indicesB){
+        int aRow = indicesA[0];
+        int aCol = indicesA[1];
+        int aBoxRow = aRow/3;
+        int aBoxCol = aCol/3;
+        int aBoxIndex = aBoxRow*3 + aBoxCol;
+
+        int bRow = indicesB[0];
+        int bCol = indicesB[1];
+        int bBoxRow = bRow/3;
+        int bBoxCol = bCol/3;
+        int bBoxIndex = bBoxRow*3 + bBoxCol;
+
+
+        int aConstrains = constraints[0][aRow].size() + constraints[1][aCol].size() + constraints[2][aBoxIndex].size();
+        int bConstrains = constraints[0][bRow].size() + constraints[1][bCol].size() + constraints[2][bBoxIndex].size();
+
+        return bConstrains - aConstrains;
+
+    }
+
 //    private static PriorityQueue<Integer> leastConstrainingValue(int index, HashSet<Integer>[][] availabilitySets){
 //        int rowIndex = index / 9;
 //        int colIndex = index % 9;
@@ -416,11 +440,10 @@ public class SudokuSolver {
     /**
      * Performs DFS on the 9x9 Sudoku puzzle and also utilizes constraint propagation
      * @param sudoku a 9x9 matrix that contains the Sudoku puzzle
-     * @param index an <code>int</code> from [0,80] representing the index of the current element in this 9x9 Sudoku matrix
      * @param oldAvailabilitySets the 9x9 matrix of HashSets that contain the availability sets of each element in the Sudoku puzzle
      * @return true if DFS is complete and the Sudoku is solved, false otherwise
      */
-    private static boolean dfs(int[][] sudoku, int index, HashSet<Integer>[][] oldAvailabilitySets){
+    private static boolean dfs(int[][] sudoku, HashSet<Integer>[][] oldAvailabilitySets, HashSet<Integer>[][] oldConstraints){
 
         // Unlike usual traversals of a 9x9 matrix that require two nested for-loops, we
         // will just use one for-loop. Since a 9x9 matrix has 81 elements, we iterate until
@@ -433,30 +456,46 @@ public class SudokuSolver {
         // start at row 3, column 5. However, when we increment the outer-loop to go to row 4,
         // the column would still be set to start at column 5.
         // So, we just decided to use only one variable to cover all 81 elements.
-        for (int i = index; i < 81; i++) {
 
+        PriorityQueue<int[]> constrained = mostConstrainedVariable(sudoku, oldAvailabilitySets, oldConstraints);
+
+
+
+        while(!constrained.isEmpty()){
+            int[] currIndex = constrained.poll();
+            int i = currIndex[0];
+            int j = currIndex[1];
             // Note: i / 9 gives you the row index, and i % 9 gives you the column index.
             // If the element is unassigned, then we will proceed on this element.
-            if(sudoku[i / 9][i % 9] == 0) {
                 // We will iterate all element in this element's availability set
-                for (int num : oldAvailabilitySets[i / 9][i % 9]) {
+                for (int num : oldAvailabilitySets[i][j]) {
                     // Set the element's value to this current value from its availability set
-                    sudoku[i / 9][i % 9] = num;
+                    sudoku[i][j] = num;
+
 
                     // Create a deep copy of the current availability set
                     HashSet<Integer>[][] newAvailabilitySets = copyAvailabilitySets(oldAvailabilitySets);
+                    HashSet<Integer>[][] newConstraints = copyConstraints(oldConstraints);
+
+                    newConstraints[0][i].add(num);
+                    newConstraints[1][j].add(num);
+
+                    int boxRow = i / 3;
+                    int boxCol = j / 3;
+                    int boxIndex = boxRow*3 + boxCol;
+                    newConstraints[2][boxIndex].add(num);
 
                     // Run constraint propagation on this element and its new value.
                     // If it returns false, then this value won't work, so we must try a different
                     // value.
-                    if(!constraintPropagation(i, num, newAvailabilitySets, sudoku)){
+                    if(!constraintPropagation(9*i + j, num, newAvailabilitySets, newConstraints, sudoku)){
                         continue;
                     }
 
                     // If constraint propagation worked, then we will call DFS on the next element.
                     // If DFS returned true, then that means DFS was able to successfully complete
                     // the search, so we return true.
-                    if (dfs(sudoku, i+1, newAvailabilitySets)) {
+                    if (dfs(sudoku, newAvailabilitySets, newConstraints)) {
                         return true;
                     }
 
@@ -464,9 +503,9 @@ public class SudokuSolver {
 
                 // If current unassigned element was not able to assign a new value, then we
                 // must backtrack, so we set this element back to 0 and return false.
-                sudoku[i / 9][i % 9] = 0;
+                sudoku[i][j] = 0;
                 return false;
-            }
+
         }
 
         // Return true if the DFS search is complete (only happens if we finish the for-loop
@@ -498,6 +537,25 @@ public class SudokuSolver {
 
         // Return the copy
         return newAvailabilitySets;
+
+    }
+
+    private static HashSet<Integer>[][] copyConstraints(HashSet<Integer>[][] oldConstraints){
+        // The new 3x9 matrix of constraint sets
+        HashSet<Integer>[][] newConstraints = new HashSet[3][9];
+
+        // Traverse all elements of the input and add all the elements into our copy.
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 9; j++){
+                newConstraints[i][j] = new HashSet<>();
+                for(int num : oldConstraints[i][j]){
+                    newConstraints[i][j].add(num);
+                }
+            }
+        }
+
+        // Return the copy
+        return newConstraints;
 
     }
 

@@ -360,59 +360,6 @@ public class SudokuSolver {
     }
 
 
-//    private static int[] mostConstrainedVariable(HashSet<Integer>[][] availabilitySets){
-//        PriorityQueue<int[]> constrained = new PriorityQueue<>((a,b) -> availabilitySets[a[0]][a[1]].size() - availabilitySets[b[0]][b[1]].size());
-//
-//        for(int i = 0; i < availabilitySets.length; i++){
-//            for(int j = 0; j < availabilitySets[i].length; j++){
-//                if(availabilitySets[i][j].size() >= 1){
-//                    constrained.offer(new int[]{i, j});
-//                }
-//            }
-//        }
-//
-//        return constrained.peek();
-//
-//    }
-//
-//    private static PriorityQueue<Integer> leastConstrainingValue(int index, HashSet<Integer>[][] availabilitySets){
-//        int rowIndex = index / 9;
-//        int colIndex = index % 9;
-//        HashSet<Integer> currAvailabilitySet = availabilitySets[rowIndex][colIndex];
-//        HashMap<Integer,Integer> freq = new HashMap<>();
-//
-//        int boxRow = rowIndex / 3;
-//        int boxCol = colIndex / 3;
-//        for(int num : currAvailabilitySet) {
-//            //Iterate through the box that this element is in
-//            for (int k = 3*boxRow; k < 3 * boxRow + 3; k++) {
-//                for (int l = 3*boxCol; l < 3 * boxCol + 3; l++) {
-//                    if(availabilitySets[k][l].contains(num)){
-//                        freq.put(num, freq.getOrDefault(num,0) + 1);
-//                    }
-//                }
-//            }
-//
-//            //Iterate through the column that this element is in
-//            for (int k = 0; k < 9; k++) {
-//                if(availabilitySets[k][rowIndex].contains(num)){
-//                    freq.put(num, freq.getOrDefault(num,0) + 1);
-//                }
-//            }
-//
-//            //Iterate through the row that this element is in
-//            for (int k = 0; k < 9; k++) {
-//                if(availabilitySets[colIndex][k].contains(num)){
-//                    freq.put(num, freq.getOrDefault(num,0) + 1);
-//                }
-//            }
-//        }
-//
-//        PriorityQueue<>
-//
-//
-//    }
-
     /**
      * Performs DFS on the 9x9 Sudoku puzzle and also utilizes constraint propagation
      * @param sudoku a 9x9 matrix that contains the Sudoku puzzle

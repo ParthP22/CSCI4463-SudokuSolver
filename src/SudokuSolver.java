@@ -399,43 +399,49 @@ public class SudokuSolver {
 
     }
 
-//    private static PriorityQueue<Integer> leastConstrainingValue(int index, HashSet<Integer>[][] availabilitySets){
-//        int rowIndex = index / 9;
-//        int colIndex = index % 9;
-//        HashSet<Integer> currAvailabilitySet = availabilitySets[rowIndex][colIndex];
-//        HashMap<Integer,Integer> freq = new HashMap<>();
-//
-//        int boxRow = rowIndex / 3;
-//        int boxCol = colIndex / 3;
-//        for(int num : currAvailabilitySet) {
-//            //Iterate through the box that this element is in
-//            for (int k = 3*boxRow; k < 3 * boxRow + 3; k++) {
-//                for (int l = 3*boxCol; l < 3 * boxCol + 3; l++) {
-//                    if(availabilitySets[k][l].contains(num)){
-//                        freq.put(num, freq.getOrDefault(num,0) + 1);
-//                    }
-//                }
-//            }
-//
-//            //Iterate through the column that this element is in
-//            for (int k = 0; k < 9; k++) {
-//                if(availabilitySets[k][rowIndex].contains(num)){
-//                    freq.put(num, freq.getOrDefault(num,0) + 1);
-//                }
-//            }
-//
-//            //Iterate through the row that this element is in
-//            for (int k = 0; k < 9; k++) {
-//                if(availabilitySets[colIndex][k].contains(num)){
-//                    freq.put(num, freq.getOrDefault(num,0) + 1);
-//                }
-//            }
-//        }
-//
-//        PriorityQueue<>
-//
-//
-//    }
+    private static PriorityQueue<int[]> leastConstrainingValue(int[] indices, HashSet<Integer>[][] availabilitySets){
+        int rowIndex = indices[0];
+        int colIndex = indices[1];
+        HashSet<Integer> currAvailabilitySet = availabilitySets[rowIndex][colIndex];
+        HashMap<Integer,Integer> freq = new HashMap<>();
+
+        int boxRow = rowIndex / 3;
+        int boxCol = colIndex / 3;
+        for(int num : currAvailabilitySet) {
+            //Iterate through the box that this element is in
+            for (int k = 3*boxRow; k < 3 * boxRow + 3; k++) {
+                for (int l = 3*boxCol; l < 3 * boxCol + 3; l++) {
+                    if(availabilitySets[k][l].contains(num)){
+                        freq.put(num, freq.getOrDefault(num,0) + 1);
+                    }
+                }
+            }
+
+            //Iterate through the column that this element is in
+            for (int k = 0; k < 9; k++) {
+                if(availabilitySets[k][rowIndex].contains(num)){
+                    freq.put(num, freq.getOrDefault(num,0) + 1);
+                }
+            }
+
+            //Iterate through the row that this element is in
+            for (int k = 0; k < 9; k++) {
+                if(availabilitySets[colIndex][k].contains(num)){
+                    freq.put(num, freq.getOrDefault(num,0) + 1);
+                }
+            }
+        }
+
+        PriorityQueue<int[]> values = new PriorityQueue<>((a,b) -> a[1] - b[1]);
+
+        for(Map.Entry<Integer,Integer> entry : freq.entrySet()){
+            values.offer(new int[]{entry.getKey(), entry.getValue()});
+        }
+
+        return values;
+
+
+    }
 
     /**
      * Performs DFS on the 9x9 Sudoku puzzle and also utilizes constraint propagation
@@ -468,43 +474,45 @@ public class SudokuSolver {
             // Note: i / 9 gives you the row index, and i % 9 gives you the column index.
             // If the element is unassigned, then we will proceed on this element.
                 // We will iterate all element in this element's availability set
-                for (int num : oldAvailabilitySets[i][j]) {
-                    // Set the element's value to this current value from its availability set
-                    sudoku[i][j] = num;
+
+            PriorityQueue<int[]> values = leastConstrainingValue(currIndex,oldAvailabilitySets);
+            for (int[] num : values) {
+                // Set the element's value to this current value from its availability set
+                sudoku[i][j] = num[0];
 
 
-                    // Create a deep copy of the current availability set
-                    HashSet<Integer>[][] newAvailabilitySets = copyAvailabilitySets(oldAvailabilitySets);
-                    HashSet<Integer>[][] newConstraints = copyConstraints(oldConstraints);
+                // Create a deep copy of the current availability set
+                HashSet<Integer>[][] newAvailabilitySets = copyAvailabilitySets(oldAvailabilitySets);
+                HashSet<Integer>[][] newConstraints = copyConstraints(oldConstraints);
 
-                    newConstraints[0][i].add(num);
-                    newConstraints[1][j].add(num);
+                newConstraints[0][i].add(num[0]);
+                newConstraints[1][j].add(num[0]);
 
-                    int boxRow = i / 3;
-                    int boxCol = j / 3;
-                    int boxIndex = boxRow*3 + boxCol;
-                    newConstraints[2][boxIndex].add(num);
+                int boxRow = i / 3;
+                int boxCol = j / 3;
+                int boxIndex = boxRow*3 + boxCol;
+                newConstraints[2][boxIndex].add(num[0]);
 
-                    // Run constraint propagation on this element and its new value.
-                    // If it returns false, then this value won't work, so we must try a different
-                    // value.
-                    if(!constraintPropagation(9*i + j, num, newAvailabilitySets, newConstraints, sudoku)){
-                        continue;
-                    }
-
-                    // If constraint propagation worked, then we will call DFS on the next element.
-                    // If DFS returned true, then that means DFS was able to successfully complete
-                    // the search, so we return true.
-                    if (dfs(sudoku, newAvailabilitySets, newConstraints)) {
-                        return true;
-                    }
-
+                // Run constraint propagation on this element and its new value.
+                // If it returns false, then this value won't work, so we must try a different
+                // value.
+                if(!constraintPropagation(9*i + j, num[0], newAvailabilitySets, newConstraints, sudoku)){
+                    continue;
                 }
 
-                // If current unassigned element was not able to assign a new value, then we
-                // must backtrack, so we set this element back to 0 and return false.
-                sudoku[i][j] = 0;
-                return false;
+                // If constraint propagation worked, then we will call DFS on the next element.
+                // If DFS returned true, then that means DFS was able to successfully complete
+                // the search, so we return true.
+                if (dfs(sudoku, newAvailabilitySets, newConstraints)) {
+                    return true;
+                }
+
+            }
+
+            // If current unassigned element was not able to assign a new value, then we
+            // must backtrack, so we set this element back to 0 and return false.
+            sudoku[i][j] = 0;
+            return false;
 
         }
 

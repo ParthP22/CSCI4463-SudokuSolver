@@ -27,7 +27,6 @@ public class Main {
 
         SudokuSolver.solveSudoku(sudoku);
 
-        System.out.println("Solved Sudoku:");
         SudokuParser.printSudoku(sudoku);
 
 
